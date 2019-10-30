@@ -46,6 +46,8 @@ typedef struct mp_dynamic_compiler_t {
     uint8_t small_int_bits; // must be <= host small_int_bits
     bool opt_cache_map_lookup_in_bytecode;
     bool py_builtins_str_unicode;
+    uint8_t native_arch;
+    uint8_t nlr_buf_num_regs;
 } mp_dynamic_compiler_t;
 extern mp_dynamic_compiler_t mp_dynamic_compiler;
 #endif
@@ -77,7 +79,7 @@ typedef struct _mp_state_mem_t {
     byte *gc_pool_end;
 
     int gc_stack_overflow;
-    size_t gc_stack[MICROPY_ALLOC_GC_STACK_SIZE];
+    MICROPY_GC_STACK_ENTRY_TYPE gc_stack[MICROPY_ALLOC_GC_STACK_SIZE];
     uint16_t gc_lock_depth;
 
     // This variable controls auto garbage collection.  If set to 0 then the
@@ -140,12 +142,17 @@ typedef struct _mp_state_vm_t {
     volatile mp_obj_t mp_pending_exception;
 
     #if MICROPY_ENABLE_SCHEDULER
-    mp_sched_item_t sched_stack[MICROPY_SCHEDULER_DEPTH];
+    mp_sched_item_t sched_queue[MICROPY_SCHEDULER_DEPTH];
     #endif
 
     // current exception being handled, for sys.exc_info()
     #if MICROPY_PY_SYS_EXC_INFO
     mp_obj_base_t *cur_exception;
+    #endif
+
+    #if MICROPY_PY_SYS_ATEXIT
+    // exposed through sys.atexit function
+    mp_obj_t sys_exitfunc;
     #endif
 
     // dictionary for the __main__ module
@@ -171,7 +178,6 @@ typedef struct _mp_state_vm_t {
 
     #if MICROPY_PY_OS_DUPTERM
     mp_obj_t dupterm_objs[MICROPY_PY_OS_DUPTERM];
-    mp_obj_t dupterm_arr_obj;
     #endif
 
     #if MICROPY_PY_LWIP_SLIP
@@ -181,6 +187,10 @@ typedef struct _mp_state_vm_t {
     #if MICROPY_VFS
     struct _mp_vfs_mount_t *vfs_cur;
     struct _mp_vfs_mount_t *vfs_mount_table;
+    #endif
+
+    #if MICROPY_PY_BLUETOOTH
+    mp_obj_t bluetooth;
     #endif
 
     //
@@ -200,6 +210,9 @@ typedef struct _mp_state_vm_t {
 
     #if MICROPY_ENABLE_COMPILER
     mp_uint_t mp_optimise_value;
+    #if MICROPY_EMIT_NATIVE
+    uint8_t default_emit_opt; // one of MP_EMIT_OPT_xxx
+    #endif
     #endif
 
     // size of the emergency exception buf, if it's dynamically allocated
@@ -209,7 +222,8 @@ typedef struct _mp_state_vm_t {
 
     #if MICROPY_ENABLE_SCHEDULER
     volatile int16_t sched_state;
-    uint16_t sched_sp;
+    uint8_t sched_len;
+    uint8_t sched_idx;
     #endif
 
     #if MICROPY_PY_THREAD_GIL
@@ -244,6 +258,12 @@ typedef struct _mp_state_thread_t {
     mp_obj_dict_t *dict_globals;
 
     nlr_buf_t *nlr_top;
+
+    #if MICROPY_PY_SYS_SETTRACE
+    mp_obj_t prof_trace_callback;
+    bool prof_callback_is_executing;
+    struct _mp_code_state_t *current_code_state;
+    #endif
 } mp_state_thread_t;
 
 // This structure combines the above 3 structures.

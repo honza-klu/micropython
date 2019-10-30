@@ -51,6 +51,7 @@
 #define MICROPY_PY_BUILTINS_RANGE_ATTRS (0)
 #define MICROPY_PY_BUILTINS_REVERSED (0)
 #define MICROPY_PY_BUILTINS_SET     (0)
+#define MICROPY_PY_BUILTINS_STR_COUNT (0)
 #define MICROPY_PY_BUILTINS_HELP    (1)
 #define MICROPY_PY_BUILTINS_HELP_TEXT zephyr_help_text
 #define MICROPY_PY_ARRAY            (0)
@@ -59,6 +60,8 @@
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
 #define MICROPY_PY_MACHINE          (1)
+#define MICROPY_PY_MACHINE_I2C      (1)
+#define MICROPY_PY_MACHINE_I2C_MAKE_NEW machine_hard_i2c_make_new
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW mp_pin_make_new
 #define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_PY_STRUCT           (0)
@@ -116,10 +119,8 @@ extern const struct _mp_obj_module_t mp_module_zsensor;
 
 #if MICROPY_PY_USOCKET
 #define MICROPY_PY_USOCKET_DEF { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_usocket) },
-#define MICROPY_PY_USOCKET_WEAK_DEF { MP_ROM_QSTR(MP_QSTR_socket), MP_ROM_PTR(&mp_module_usocket) },
 #else
 #define MICROPY_PY_USOCKET_DEF
-#define MICROPY_PY_USOCKET_WEAK_DEF
 #endif
 
 #if MICROPY_PY_UTIME
@@ -146,10 +147,6 @@ extern const struct _mp_obj_module_t mp_module_zsensor;
     MICROPY_PY_UTIME_DEF \
     MICROPY_PY_ZEPHYR_DEF \
     MICROPY_PY_ZSENSOR_DEF \
-
-#define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
-    { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_time) }, \
-    MICROPY_PY_USOCKET_WEAK_DEF \
 
 // extra built in names to add to the global namespace
 #define MICROPY_PORT_BUILTINS \

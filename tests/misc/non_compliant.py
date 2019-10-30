@@ -1,7 +1,7 @@
 # tests for things that are not implemented, or have non-compliant behaviour
 
 try:
-    import array
+    import uarray as array
     import ustruct
 except ImportError:
     print("SKIP")
@@ -139,3 +139,13 @@ class A:
 class B(object, A):
     pass
 B().foo()
+
+# can't assign property (or other special accessors) to already-subclassed class
+class A:
+    pass
+class B(A):
+    pass
+try:
+    A.bar = property()
+except AttributeError:
+    print('AttributeError')
